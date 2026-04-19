@@ -30,7 +30,15 @@ canvas { display:block; }
 }
 @keyframes titlePulse { from{transform:scale(1) rotate(-1deg)} to{transform:scale(1.04) rotate(1deg)} }
 
-.char-select-area { width:100%; max-width:900px; padding:0 10px; z-index:1; flex:1; display:flex; flex-direction:column; }
+/* Default portrait/desktop layout for home columns */
+#home-left {
+  width:100%; max-width:900px; padding:0 10px; z-index:1; flex:1;
+  display:flex; flex-direction:column; align-items:center;
+}
+#home-right {
+  width:100%; max-width:900px; padding:0 10px; z-index:1;
+  display:flex; flex-direction:column; align-items:center;
+}
 .char-grid { display:flex; gap:5px; justify-content:center; flex-wrap:wrap; padding:2px 0; }
 .char-card {
   width:clamp(52px,7vw,68px); height:clamp(52px,7vw,68px);
@@ -93,8 +101,11 @@ canvas { display:block; }
 }
 .stat-box {
   background:rgba(0,0,0,0.65); border:3px solid #FFD700; border-radius:12px;
-  padding:5px 12px; color:#fff; font-size:15px; font-weight:900; text-shadow:2px 2px 0 #000;
+  padding:5px 12px; color:#fff; font-weight:900; text-shadow:2px 2px 0 #000;
+  display:flex; flex-direction:column; align-items:center; gap:0;
 }
+.stat-lbl { font-size:9px; font-weight:normal; opacity:0.75; line-height:1; }
+.stat-val  { font-size:16px; font-weight:900; line-height:1.2; }
 .wave-box { color:#FF6B35; border-color:#FF6B35; }
 .gem-box  { color:#7CFC00; border-color:#7CFC00; }
 
@@ -124,31 +135,104 @@ canvas { display:block; }
 #char-hud .hud-name { font-size:11px; font-weight:900; color:#fff; text-shadow:1px 1px 0 #000; }
 #char-hud .hud-ability { font-size:9px; color:#ddd; }
 
-#joystick-left,#joystick-right { position:fixed; bottom:80px; width:110px; height:110px; border-radius:50%; background:rgba(255,255,255,0.1); border:3px solid rgba(255,255,255,0.3); z-index:10; display:none; }
+/* ===== JOYSTICKS & MOBILE CONTROLS (base - hidden by default) ===== */
+#joystick-left,#joystick-right {
+  position:fixed; bottom:16px; width:110px; height:110px; border-radius:50%;
+  background:rgba(255,255,255,0.08); border:3px solid rgba(255,255,255,0.25);
+  z-index:10; display:none;
+}
 #joystick-left { left:16px; } #joystick-right { right:16px; }
-.joystick-knob { position:absolute; width:46px; height:46px; background:rgba(255,215,0,0.7); border:3px solid #FFD700; border-radius:50%; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; }
+.joystick-knob { position:absolute; width:48px; height:48px; background:rgba(255,215,0,0.65); border:3px solid #FFD700; border-radius:50%; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; }
+
 #mobile-super-btn {
-  position:fixed; bottom:82px; left:50%; transform:translateX(-50%);
-  width:72px; height:72px; border-radius:50%; display:none;
+  position:fixed; bottom:22px; right:140px;
+  width:84px; height:84px; border-radius:50%; display:none;
   background:radial-gradient(circle at 40% 35%,#c084fc,#7B2FBE); border:4px solid #FFD700;
   font-size:13px; font-weight:900; color:#FFD700; text-shadow:1px 1px 0 #000;
   cursor:pointer; z-index:11; align-items:center; justify-content:center; flex-direction:column;
-  box-shadow:0 4px 16px rgba(123,47,190,0.7); line-height:1.2;
+  box-shadow:0 4px 20px rgba(123,47,190,0.8); line-height:1.2;
 }
-#mobile-super-btn.ready { background:radial-gradient(circle at 40% 35%,#FFD700,#FF6B00); border-color:#fff; color:#000; text-shadow:none; box-shadow:0 0 20px #FFD700; animation:superPulse 0.6s infinite alternate; }
+#mobile-super-btn.ready { background:radial-gradient(circle at 40% 35%,#FFD700,#FF6B00); border-color:#fff; color:#000; text-shadow:none; box-shadow:0 0 24px #FFD700; animation:superPulse 0.6s infinite alternate; }
+
 #mobile-auto-btn {
-  position:fixed; top:12px; right:12px;
-  background:rgba(0,0,0,0.7); border:3px solid #7CFC00; border-radius:10px;
-  padding:6px 12px; color:#7CFC00; font-size:12px; font-weight:900;
+  position:fixed; bottom:38px; left:140px;
+  background:rgba(0,0,0,0.8); border:3px solid #7CFC00; border-radius:14px;
+  padding:10px 16px; color:#7CFC00; font-size:12px; font-weight:900;
   cursor:pointer; z-index:11; display:none; letter-spacing:1px;
 }
+#mobile-auto-btn.on { background:rgba(124,252,0,0.15); border-color:#7CFC00; color:#7CFC00; }
+
+/* ===== PORTRAIT WARNING OVERLAY ===== */
+#portrait-overlay {
+  position:fixed; inset:0; z-index:500; display:none;
+  background:#0a0a18; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+  color:#FFD700; text-align:center;
+}
+#portrait-overlay .po-icon { font-size:56px; animation:rotateHint 2s ease-in-out infinite; }
+#portrait-overlay .po-msg  { font-size:16px; font-weight:900; letter-spacing:2px; text-shadow:2px 2px 0 #000; }
+#portrait-overlay .po-sub  { font-size:11px; color:#aaa; }
+@keyframes rotateHint { 0%,100%{transform:rotate(0)} 40%,60%{transform:rotate(90deg)} }
+
+/* ===== MOBILE: ALL TOUCH DEVICES ===== */
 @media (pointer:coarse) {
-  #joystick-left,#joystick-right { display:block; }
-  #mobile-super-btn { display:flex; }
-  #mobile-auto-btn { display:block; }
-  #minimap { bottom:auto; top:8px; left:50%; transform:translateX(-50%); width:130px; height:98px; }
   #zoom-btn { display:none !important; }
   .controls-hint { display:none; }
+}
+
+/* ===== MOBILE LANDSCAPE ===== */
+@media (pointer:coarse) and (orientation:landscape) {
+  /* ---- Home screen: side-by-side ---- */
+  #home { flex-direction:row; align-items:stretch; padding:6px 8px; gap:8px; overflow:hidden; }
+  .home-title { font-size:clamp(16px,3.5vw,26px); margin-top:2px; letter-spacing:2px; }
+  .home-subtitle { display:none; }
+  .gem-bank-bar { font-size:10px; padding:2px 8px; margin-bottom:4px; }
+  #home-left { flex:1; display:flex; flex-direction:column; align-items:flex-start; overflow-y:auto; overflow-x:hidden; z-index:1; }
+  #home-right { width:clamp(190px,32vw,260px); flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1; }
+  .char-grid { justify-content:flex-start; gap:4px; flex:1; overflow-y:auto; }
+  .char-card { width:clamp(42px,7vw,54px); height:clamp(42px,7vw,54px); }
+  .char-card .card-emoji { font-size:clamp(14px,3vw,20px); }
+  .char-card .card-name  { font-size:clamp(5px,0.9vw,8px); }
+  #preview-panel { margin:0 0 6px 0; min-height:unset; padding:8px 10px; }
+  #prev-portrait { width:52px; height:52px; }
+  .preview-name { font-size:clamp(11px,2vw,16px); }
+  .preview-desc, .preview-super { font-size:8px; }
+  .play-btn { padding:9px 16px; font-size:clamp(11px,2vw,15px); margin-bottom:4px; width:100%; }
+
+  /* ---- Game UI: compact 4-box top bar ---- */
+  #ui { padding:4px 6px; gap:4px; }
+  .stat-box { flex:1; text-align:center; padding:3px 4px; font-size:10px; border-width:2px; border-radius:8px; display:flex; flex-direction:column; align-items:center; gap:0; }
+  .stat-lbl { font-size:8px; font-weight:normal; opacity:0.7; line-height:1; }
+  .stat-val  { font-size:14px; font-weight:900; line-height:1.15; }
+
+  /* ---- Minimap: top-right corner ---- */
+  #minimap { top:4px; right:4px; bottom:auto; left:auto; transform:none; width:88px; height:66px; border-width:2px; }
+
+  /* ---- Joysticks ---- */
+  #joystick-left, #joystick-right { display:block; width:110px; height:110px; bottom:16px; }
+  #joystick-left  { left:16px; }
+  #joystick-right { right:16px; }
+
+  /* ---- SUPER button: left of right joystick ---- */
+  #mobile-super-btn { display:flex; bottom:22px; right:140px; }
+
+  /* ---- AUTO button: right of left joystick ---- */
+  #mobile-auto-btn { display:block; bottom:38px; left:140px; }
+
+  /* ---- Super gauge: center bottom, above controls ---- */
+  #super-bar-wrap { bottom:136px; left:50%; transform:translateX(-50%); width:190px; padding:0; }
+  #super-bar-bg { height:12px; }
+  #super-label, #super-ready-label { font-size:11px; }
+
+  /* ---- Quit button: small, top-center ---- */
+  #quit-btn { font-size:10px; padding:3px 10px; top:5px; }
+
+  /* ---- Char HUD: hidden to save space ---- */
+  #char-hud { display:none !important; }
+}
+
+/* ===== MOBILE PORTRAIT: show rotation warning ===== */
+@media (pointer:coarse) and (orientation:portrait) {
+  #portrait-overlay { display:flex; }
 }
 
 #gameover { position:fixed; inset:0; background:rgba(0,0,0,0.88); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:100; color:#fff; }
@@ -176,11 +260,15 @@ canvas { display:block; }
 <!-- HOME -->
 <div id="home">
   <canvas id="home-bg-stars"></canvas>
-  <div class="home-title">⚡ タケスタ ⚡</div>
-  <div class="home-subtitle">B R A W L  G A M E</div>
-  <div class="gem-bank-bar">💎 所持ジェム: <span id="gem-bank-disp">0</span></div>
-  <div class="char-select-area">
+  <!-- Left column: title + grid -->
+  <div id="home-left">
+    <div class="home-title">⚡ タケスタ ⚡</div>
+    <div class="home-subtitle">B R A W L  G A M E</div>
+    <div class="gem-bank-bar">💎 所持ジェム: <span id="gem-bank-disp">0</span></div>
     <div class="char-grid" id="char-grid"></div>
+  </div>
+  <!-- Right column: preview + play -->
+  <div id="home-right">
     <div class="preview-panel" id="preview-panel">
       <canvas id="prev-portrait" width="70" height="70"></canvas>
       <div class="preview-info">
@@ -194,9 +282,16 @@ canvas { display:block; }
         <div id="power-area"></div>
       </div>
     </div>
+    <button class="play-btn" id="play-btn" onclick="startGame()">▶ バトル開始！</button>
+    <div class="controls-hint">移動:WASD / スペース:射撃ON・OFF / E:スーパー発動 / M:全体マップ</div>
   </div>
-  <button class="play-btn" id="play-btn" onclick="startGame()">▶ バトル開始！</button>
-  <div class="controls-hint">移動:WASD / スペース:射撃ON・OFF / E:スーパー発動 / M:全体マップ</div>
+</div>
+
+<!-- PORTRAIT ROTATION WARNING -->
+<div id="portrait-overlay">
+  <div class="po-icon">📱</div>
+  <div class="po-msg">📲 横向きにしてね！</div>
+  <div class="po-sub">スマホを横向きにすると<br>タケスタが遊べるよ！</div>
 </div>
 
 <!-- QUIT BUTTON (in-game) -->
@@ -218,10 +313,10 @@ canvas { display:block; }
 
 <!-- GAME UI -->
 <div id="ui" style="display:none">
-  <div class="stat-box">❤️ <span id="hp">100</span></div>
-  <div class="stat-box wave-box">Wave <span id="wave">1</span></div>
-  <div class="stat-box">⭐ <span id="score">0</span></div>
-  <div class="stat-box gem-box">💎 <span id="gems">0</span></div>
+  <div class="stat-box"><div class="stat-lbl">❤️ HP</div><div class="stat-val" id="hp">100</div></div>
+  <div class="stat-box wave-box"><div class="stat-lbl">🌊 WAVE</div><div class="stat-val" id="wave">1</div></div>
+  <div class="stat-box"><div class="stat-lbl">⭐ スコア</div><div class="stat-val" id="score">0</div></div>
+  <div class="stat-box gem-box"><div class="stat-lbl">💎 ジェム</div><div class="stat-val" id="gems">0</div></div>
 </div>
 <div id="super-bar-wrap" style="display:none">
   <div id="super-ready-label">⚡ SUPER 発動！⚡</div>
@@ -2035,17 +2130,25 @@ function trySuper() {
 function toggleAutoShoot() {
   player.autoShoot=!player.autoShoot;
   const btn=document.getElementById('mobile-auto-btn');
-  if (btn) btn.textContent='🔫 AUTO: '+(player.autoShoot?'ON':'OFF');
+  if (btn) {
+    btn.textContent='🔫 AUTO '+(player.autoShoot?'ON ✓':'OFF');
+    btn.classList.toggle('on', player.autoShoot);
+  }
 }
 const isTouch = window.matchMedia('(pointer:coarse)').matches;
+const isLandscape = () => window.matchMedia('(orientation:landscape)').matches;
 function showMobileControls(show) {
   if (!isTouch) return;
-  const d1=show?'flex':'none', d2=show?'block':'none';
-  document.getElementById('mobile-super-btn').style.display=d1;
-  document.getElementById('mobile-auto-btn').style.display=d2;
-  document.getElementById('joystick-left').style.display=show?'block':'none';
-  document.getElementById('joystick-right').style.display=show?'block':'none';
+  const vis = show && isLandscape();
+  document.getElementById('mobile-super-btn').style.display = vis ? 'flex' : 'none';
+  document.getElementById('mobile-auto-btn').style.display  = vis ? 'block' : 'none';
+  document.getElementById('joystick-left').style.display    = vis ? 'block' : 'none';
+  document.getElementById('joystick-right').style.display   = vis ? 'block' : 'none';
 }
+// Re-show controls when orientation changes during game
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => { if (gameRunning && !gamePaused) showMobileControls(true); }, 100);
+});
 
 let lJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0};
 let rJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0,shooting:false};
