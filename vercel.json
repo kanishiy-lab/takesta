@@ -1,4 +1,5 @@
 {
+  "alias": ["takesta.vercel.app"],
   "headers": [
     {
       "source": "/",

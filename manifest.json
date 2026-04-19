@@ -1,0 +1,27 @@
+{
+  "name": "タケスタ",
+  "short_name": "タケスタ",
+  "description": "29体のキャラクターで敵を倒せ！ブラウザで今すぐ無料プレイ。",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0d0d1a",
+  "theme_color": "#FFD700",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%230d0d1a' rx='24'/><circle cx='96' cy='96' r='60' fill='%23FFD700' stroke='%23000' stroke-width='6'/><circle cx='80' cy='85' r='8' fill='%23000'/><circle cx='112' cy='85' r='8' fill='%23000'/><path d='M78 115 Q96 130 114 115' stroke='%23000' stroke-width='5' fill='none' stroke-linecap='round'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%230d0d1a' rx='64'/><circle cx='256' cy='256' r='160' fill='%23FFD700' stroke='%23000' stroke-width='16'/><circle cx='213' cy='226' r='22' fill='%23000'/><circle cx='299' cy='226' r='22' fill='%23000'/><path d='M208 305 Q256 345 304 305' stroke='%23000' stroke-width='14' fill='none' stroke-linecap='round'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "screenshots": []
+}

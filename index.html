@@ -11,6 +11,14 @@
 <meta name="author" content="タケスタ">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://takesta.vercel.app/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#FFD700">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="タケスタ">
 
 <!-- Open Graph (SNS・Googleリッチ表示) -->
 <meta property="og:type" content="website">
@@ -3166,6 +3174,10 @@ function quitWithRewards() {
 function loop() { if (gameRunning && !gamePaused) { update(); draw(); } requestAnimationFrame(loop); }
 buildHomeScreen();
 loop();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
 </script>
 </body>
 </html>
