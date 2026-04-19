@@ -137,12 +137,21 @@ canvas { display:block; }
 
 /* ===== JOYSTICKS & MOBILE CONTROLS (base - hidden by default) ===== */
 #joystick-left,#joystick-right {
-  position:fixed; bottom:16px; width:110px; height:110px; border-radius:50%;
-  background:rgba(255,255,255,0.08); border:3px solid rgba(255,255,255,0.25);
-  z-index:10; display:none;
+  position:fixed; bottom:24px; width:120px; height:120px; border-radius:50%;
+  background:rgba(255,255,255,0.06); border:3px solid rgba(255,255,255,0.2);
+  z-index:10; display:none; opacity:0.3;
+  transition:opacity 0.15s;
+  /* ジョイスティックは JS でタッチ位置に移動 */
 }
-#joystick-left { left:16px; } #joystick-right { right:16px; }
-.joystick-knob { position:absolute; width:48px; height:48px; background:rgba(255,215,0,0.65); border:3px solid #FFD700; border-radius:50%; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; }
+#joystick-left { left:20px; } #joystick-right { right:20px; }
+.joystick-knob {
+  position:absolute; width:52px; height:52px;
+  background:radial-gradient(circle at 38% 35%,rgba(255,240,180,0.9),rgba(255,165,0,0.75));
+  border:3px solid #FFD700; border-radius:50%;
+  top:50%; left:50%; transform:translate(-50%,-50%);
+  pointer-events:none; box-shadow:0 2px 8px rgba(0,0,0,0.5);
+  transition:transform 0.04s linear;
+}
 
 #mobile-super-btn {
   position:fixed; bottom:22px; right:140px;
@@ -2195,8 +2204,15 @@ function showMobileControls(show) {
   const vis = show && isLandscape();
   document.getElementById('mobile-super-btn').style.display = vis ? 'flex' : 'none';
   document.getElementById('mobile-auto-btn').style.display  = vis ? 'block' : 'none';
-  document.getElementById('joystick-left').style.display    = vis ? 'block' : 'none';
-  document.getElementById('joystick-right').style.display   = vis ? 'block' : 'none';
+  const lj=document.getElementById('joystick-left');
+  const rj=document.getElementById('joystick-right');
+  if (vis) {
+    lj.style.display='block'; lj.style.opacity='0.3';
+    rj.style.display='block'; rj.style.opacity='0.3';
+  } else {
+    lj.style.display='none';
+    rj.style.display='none';
+  }
 }
 // Re-show controls when orientation changes during game
 window.addEventListener('orientationchange', () => {
@@ -2206,13 +2222,38 @@ window.addEventListener('orientationchange', () => {
 let lJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0};
 let rJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0,shooting:false};
 let pinchDist=0,pinchActive=false;
+const JOY_R=65; // ノブの最大移動半径(px)
+const JOY_DEAD=6; // デッドゾーン(px) - この以内は無入力扱い
+
+// ジョイスティックをタッチ位置に移動させる
+function placeJoy(elId,cx,cy,isRight) {
+  const el=document.getElementById(elId);
+  const half=el.offsetWidth/2||60;
+  el.style.position='fixed';
+  el.style.left=(cx-half)+'px';
+  el.style.top=(cy-half)+'px';
+  el.style.bottom='auto';
+  if(isRight){el.style.right='auto';}
+  el.style.opacity='0.92';
+}
+// ジョイスティックをホーム位置に戻す
+function resetJoy(elId,isRight) {
+  const el=document.getElementById(elId);
+  el.style.position='';
+  el.style.left='';
+  el.style.top='';
+  el.style.bottom='';
+  if(isRight){el.style.right='';}
+  el.style.opacity='0.3';
+}
 
 function handleTouchStart(e) {
-  if (!gameRunning) return; e.preventDefault();
+  if (!gameRunning||gamePaused) return; e.preventDefault();
   // 2本指 → ピンチズーム開始
   if (e.touches.length===2) {
     pinchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
     pinchActive=true;
+    resetJoy('joystick-left',false); resetJoy('joystick-right',true);
     lJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0};
     rJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0,shooting:false};
     document.getElementById('lknob').style.transform='translate(-50%,-50%)';
@@ -2221,8 +2262,13 @@ function handleTouchStart(e) {
   }
   pinchActive=false;
   for (const t of e.changedTouches) {
-    if (t.clientX<W/2&&!lJoy.active) lJoy={active:true,id:t.identifier,sx:t.clientX,sy:t.clientY,dx:0,dy:0};
-    else if (t.clientX>=W/2&&!rJoy.active) rJoy={active:true,id:t.identifier,sx:t.clientX,sy:t.clientY,dx:0,dy:0,shooting:true};
+    if (t.clientX<W/2&&!lJoy.active) {
+      lJoy={active:true,id:t.identifier,sx:t.clientX,sy:t.clientY,dx:0,dy:0};
+      placeJoy('joystick-left',t.clientX,t.clientY,false);
+    } else if (t.clientX>=W/2&&!rJoy.active) {
+      rJoy={active:true,id:t.identifier,sx:t.clientX,sy:t.clientY,dx:0,dy:0,shooting:true};
+      placeJoy('joystick-right',t.clientX,t.clientY,true);
+    }
   }
 }
 function handleTouchMove(e) {
@@ -2236,15 +2282,28 @@ function handleTouchMove(e) {
   }
   for (const t of e.changedTouches) {
     if (t.identifier===lJoy.id) {
-      const dx=t.clientX-lJoy.sx,dy=t.clientY-lJoy.sy,d=Math.hypot(dx,dy),m=50;
-      lJoy.dx=d>m?dx/d:dx/m; lJoy.dy=d>m?dy/d:dy/m;
-      document.getElementById('lknob').style.transform=`translate(calc(-50% + ${lJoy.dx*50}px),calc(-50% + ${lJoy.dy*50}px))`;
+      const dx=t.clientX-lJoy.sx, dy=t.clientY-lJoy.sy;
+      const dist=Math.hypot(dx,dy);
+      if (dist<JOY_DEAD) { lJoy.dx=0; lJoy.dy=0; }
+      else {
+        const angle=Math.atan2(dy,dx);
+        const capped=Math.min(dist,JOY_R);
+        lJoy.dx=Math.cos(angle)*(dist>=JOY_R?1:dist/JOY_R);
+        lJoy.dy=Math.sin(angle)*(dist>=JOY_R?1:dist/JOY_R);
+        document.getElementById('lknob').style.transform=
+          `translate(calc(-50% + ${Math.cos(angle)*capped}px),calc(-50% + ${Math.sin(angle)*capped}px))`;
+      }
     }
     if (t.identifier===rJoy.id) {
-      const dx=t.clientX-rJoy.sx,dy=t.clientY-rJoy.sy,d=Math.hypot(dx,dy),m=50;
-      rJoy.dx=d>m?dx/d:dx/m; rJoy.dy=d>m?dy/d:dy/m;
-      if (d>10) player.facing=Math.atan2(rJoy.dy,rJoy.dx);
-      document.getElementById('rknob').style.transform=`translate(calc(-50% + ${rJoy.dx*50}px),calc(-50% + ${rJoy.dy*50}px))`;
+      const dx=t.clientX-rJoy.sx, dy=t.clientY-rJoy.sy;
+      const dist=Math.hypot(dx,dy);
+      const angle=Math.atan2(dy,dx);
+      const capped=Math.min(dist,JOY_R);
+      rJoy.dx=Math.cos(angle)*(dist>=JOY_R?1:dist/JOY_R);
+      rJoy.dy=Math.sin(angle)*(dist>=JOY_R?1:dist/JOY_R);
+      if (dist>JOY_DEAD) player.facing=angle;
+      document.getElementById('rknob').style.transform=
+        `translate(calc(-50% + ${Math.cos(angle)*capped}px),calc(-50% + ${Math.sin(angle)*capped}px))`;
     }
   }
 }
@@ -2252,8 +2311,16 @@ function handleTouchEnd(e) {
   e.preventDefault();
   if (e.touches.length<2) pinchActive=false;
   for (const t of e.changedTouches) {
-    if (t.identifier===lJoy.id) { lJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0}; document.getElementById('lknob').style.transform='translate(-50%,-50%)'; }
-    if (t.identifier===rJoy.id) { rJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0,shooting:false}; document.getElementById('rknob').style.transform='translate(-50%,-50%)'; }
+    if (t.identifier===lJoy.id) {
+      lJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0};
+      document.getElementById('lknob').style.transform='translate(-50%,-50%)';
+      resetJoy('joystick-left',false);
+    }
+    if (t.identifier===rJoy.id) {
+      rJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0,shooting:false};
+      document.getElementById('rknob').style.transform='translate(-50%,-50%)';
+      resetJoy('joystick-right',true);
+    }
   }
 }
 canvas.addEventListener('touchstart',handleTouchStart,{passive:false});
