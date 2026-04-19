@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://brawlstars-alpha.vercel.app/sitemap.xml
+Sitemap: https://takesta.vercel.app/sitemap.xml
