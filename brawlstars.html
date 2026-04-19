@@ -395,8 +395,8 @@ canvas { display:block; }
 <div id="takedrop-modal" style="display:none">
   <div class="td-panel">
     <div class="td-title">🎁 タケドロップ！</div>
-    <div class="td-wave-info" id="td-wave-info">Wave 7 到達！</div>
-    <div class="td-hint">7 Wave ごとにドロップ獲得！</div>
+    <div class="td-wave-info" id="td-wave-info">Wave 5 到達！</div>
+    <div class="td-hint">5 Wave ごとにドロップ獲得！</div>
     <div class="td-cards" id="td-cards"></div>
     <div class="td-total" id="td-total"></div>
     <button class="go-btn" id="td-close-btn" style="display:none;margin-top:4px" onclick="closeTakeDrop()">✨ 受け取る！</button>
@@ -3058,7 +3058,7 @@ function showGameOver() {
   document.getElementById('go-score').textContent=`⭐ ${score} ポイント`;
   document.getElementById('go-gems').textContent=`💎 +${earned} ジェム獲得！（合計: ${gemBank}）`;
   document.getElementById('go-sub').textContent=`Wave ${wave} まで到達\n${CHARS[selectedChar].emoji} ${CHARS[selectedChar].name} で挑戦`;
-  const dropCount=Math.floor(wave/7);
+  const dropCount=Math.floor(wave/5);
   document.getElementById('gameover').querySelector('h1').textContent='💥 GAME OVER 💥'+(dropCount>0?`\n🎁 タケドロップ × ${dropCount}`:'');
   document.getElementById('quit-btn').style.display='none';
   showMobileControls(false);
@@ -3115,7 +3115,7 @@ function quitWithRewards() {
   document.getElementById('go-score').textContent = `⭐ ${score} ポイント`;
   document.getElementById('go-gems').textContent = `💎 +${earned} ジェム獲得！（合計: ${gemBank}）`;
   document.getElementById('go-sub').textContent = `Wave ${wave} で中断\n${CHARS[selectedChar].emoji} ${CHARS[selectedChar].name}`;
-  const dropCount=Math.floor(wave/7);
+  const dropCount=Math.floor(wave/5);
   document.getElementById('gameover').querySelector('h1').textContent='🏳 ゲーム中断'+(dropCount>0?`\n🎁 タケドロップ × ${dropCount}`:'');
   document.getElementById('gameover').style.display = 'flex';
   buildHomeScreen();
