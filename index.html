@@ -1914,7 +1914,7 @@ const WORLD_W=1600, WORLD_H=1200;
 let player,bullets,enemies,gems,mines,turrets,particles,walls;
 let gamePaused = false;
 let score,gemCount,superGems,wave,waveTimer,gameRunning;
-let camX,camY,screenShake=0,zoomOut=false,frameCount=0;
+let camX,camY,screenShake=0,zoomOut=false,frameCount=0,cameraZoom=1;
 const WALL_COLOR='#5D4037', WALL_ACCENT='#795548';
 
 // Map zone decorations (no collision)
@@ -2067,7 +2067,7 @@ function initGame() {
   bullets=[]; enemies=[]; gems=[]; mines=[]; turrets=[]; particles=[];
   walls=makeWalls();
   score=0; gemCount=0; superGems=0; wave=1; waveTimer=0;
-  gameRunning=true; screenShake=0; frameCount=0;
+  gameRunning=true; screenShake=0; frameCount=0; cameraZoom=1;
   const mab=document.getElementById('mobile-auto-btn'); if(mab) mab.textContent='🔫 AUTO: OFF';
   camX=player.x-W/2; camY=player.y-H/2;
   BGM.start();
@@ -2160,8 +2160,21 @@ window.addEventListener('orientationchange', () => {
 
 let lJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0};
 let rJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0,shooting:false};
+let pinchDist=0,pinchActive=false;
+
 function handleTouchStart(e) {
   if (!gameRunning) return; e.preventDefault();
+  // 2本指 → ピンチズーム開始
+  if (e.touches.length===2) {
+    pinchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    pinchActive=true;
+    lJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0};
+    rJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0,shooting:false};
+    document.getElementById('lknob').style.transform='translate(-50%,-50%)';
+    document.getElementById('rknob').style.transform='translate(-50%,-50%)';
+    return;
+  }
+  pinchActive=false;
   for (const t of e.changedTouches) {
     if (t.clientX<W/2&&!lJoy.active) lJoy={active:true,id:t.identifier,sx:t.clientX,sy:t.clientY,dx:0,dy:0};
     else if (t.clientX>=W/2&&!rJoy.active) rJoy={active:true,id:t.identifier,sx:t.clientX,sy:t.clientY,dx:0,dy:0,shooting:true};
@@ -2169,6 +2182,13 @@ function handleTouchStart(e) {
 }
 function handleTouchMove(e) {
   e.preventDefault();
+  // ピンチズーム処理
+  if (e.touches.length===2&&pinchActive) {
+    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    cameraZoom=Math.max(0.4,Math.min(2.5,cameraZoom*(d/pinchDist)));
+    pinchDist=d;
+    return;
+  }
   for (const t of e.changedTouches) {
     if (t.identifier===lJoy.id) {
       const dx=t.clientX-lJoy.sx,dy=t.clientY-lJoy.sy,d=Math.hypot(dx,dy),m=50;
@@ -2185,6 +2205,7 @@ function handleTouchMove(e) {
 }
 function handleTouchEnd(e) {
   e.preventDefault();
+  if (e.touches.length<2) pinchActive=false;
   for (const t of e.changedTouches) {
     if (t.identifier===lJoy.id) { lJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0}; document.getElementById('lknob').style.transform='translate(-50%,-50%)'; }
     if (t.identifier===rJoy.id) { rJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0,shooting:false}; document.getElementById('rknob').style.transform='translate(-50%,-50%)'; }
@@ -2223,7 +2244,10 @@ function update() {
   frameCount++;
   const tx=player.x-W/2,ty=player.y-H/2;
   camX+=(tx-camX)*0.12; camY+=(ty-camY)*0.12;
-  camX=Math.max(0,Math.min(WORLD_W-W,camX)); camY=Math.max(0,Math.min(WORLD_H-H,camY));
+  const vw=W/cameraZoom,vh=H/cameraZoom;
+  const offX=(W-vw)/2/cameraZoom, offY=(H-vh)/2/cameraZoom;
+  camX=Math.max(-offX,Math.min(WORLD_W-W+offX,camX));
+  camY=Math.max(-offY,Math.min(WORLD_H-H+offY,camY));
   if (screenShake>0) screenShake--;
 
   // Charge dash (Bull / Mortis)
@@ -2786,7 +2810,11 @@ function draw() {
     const scale=Math.min(W/WORLD_W,H/WORLD_H)*0.95;
     ctx.translate((W-WORLD_W*scale)/2,(H-WORLD_H*scale)/2); ctx.scale(scale,scale);
   } else {
-    if (screenShake>0) ctx.translate((Math.random()-0.5)*screenShake,(Math.random()-0.5)*screenShake);
+    const sx=screenShake>0?(Math.random()-0.5)*screenShake:0;
+    const sy=screenShake>0?(Math.random()-0.5)*screenShake:0;
+    ctx.translate(W/2+sx,H/2+sy);
+    ctx.scale(cameraZoom,cameraZoom);
+    ctx.translate(-W/2,-H/2);
     ctx.translate(-camX,-camY);
   }
   drawArena();
@@ -2803,9 +2831,16 @@ function draw() {
   ctx.restore();
   if (enemies.length===0&&waveTimer>0&&waveTimer<80) {
     const alpha=waveTimer<40?waveTimer/40:(80-waveTimer)/40;
-    ctx.save(); ctx.globalAlpha=alpha; ctx.font='bold 60px Arial Black';
-    ctx.textAlign='center'; ctx.fillStyle='#FFD700'; ctx.strokeStyle='#000'; ctx.lineWidth=6;
-    ctx.strokeText(`WAVE ${wave+1}!`,W/2,H/2); ctx.fillText(`WAVE ${wave+1}!`,W/2,H/2);
+    const fs=Math.max(28,Math.min(60,W*0.09));
+    ctx.save(); ctx.globalAlpha=alpha;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font=`bold ${fs}px Arial Black`;
+    ctx.strokeStyle='#000'; ctx.lineWidth=fs*0.12;
+    ctx.strokeText(`WAVE ${wave+1}!`,W/2,H/2);
+    ctx.fillStyle='#FFD700'; ctx.fillText(`WAVE ${wave+1}!`,W/2,H/2);
+    ctx.font=`bold ${fs*0.42}px Arial Black`;
+    ctx.fillStyle='#fff'; ctx.globalAlpha=alpha*0.85;
+    ctx.fillText('準備して！',W/2,H/2+fs*0.7);
     ctx.restore();
   }
   drawMinimap();
