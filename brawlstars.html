@@ -235,6 +235,39 @@ canvas { display:block; }
   #portrait-overlay { display:flex; }
 }
 
+/* ===== TAKEDROP MODAL ===== */
+#takedrop-modal {
+  position:fixed; inset:0; z-index:120; display:none;
+  flex-direction:column; align-items:center; justify-content:center;
+  background:rgba(4,0,18,0.97);
+}
+.td-panel {
+  background:linear-gradient(155deg,#14003e 0%,#0d0d1a 55%,#1e0028 100%);
+  border:3px solid #FFD700; border-radius:24px;
+  padding:clamp(16px,3vw,28px) clamp(18px,4vw,36px);
+  text-align:center; max-width:min(94vw,580px); width:100%;
+  box-shadow:0 0 60px rgba(255,215,0,0.22),inset 0 0 40px rgba(255,215,0,0.04);
+}
+.td-title {
+  font-size:clamp(20px,5vw,38px); font-weight:900; color:#FFD700;
+  text-shadow:3px 3px 0 #000,0 0 24px #FF8C00; letter-spacing:4px;
+  margin-bottom:4px; animation:titlePulse 2s ease-in-out infinite alternate;
+}
+.td-wave-info { font-size:clamp(10px,1.8vw,13px); color:#a78bfa; font-weight:900; margin-bottom:16px; letter-spacing:1px; }
+.td-cards { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-bottom:14px; min-height:40px; }
+.td-card {
+  display:flex; flex-direction:column; align-items:center;
+  border:3px solid; border-radius:16px; padding:clamp(10px,2vw,16px) clamp(14px,3vw,22px);
+  min-width:clamp(90px,18vw,140px); background:rgba(255,255,255,0.04);
+  animation:cardReveal 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes cardReveal { from{transform:scale(0) rotate(-15deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
+.tc-label { font-size:clamp(8px,1.3vw,10px); font-weight:900; letter-spacing:2px; margin-bottom:3px; }
+.tc-name  { font-size:clamp(12px,2.2vw,16px); color:#fff; font-weight:900; margin-bottom:6px; text-shadow:1px 1px 0 #000; }
+.tc-gems  { font-size:clamp(15px,2.8vw,21px); font-weight:900; color:#7CFC00; text-shadow:1px 1px 0 #000; }
+.td-total { font-size:clamp(14px,2.8vw,20px); font-weight:900; color:#FFD700; text-shadow:2px 2px 0 #000; margin-bottom:14px; min-height:28px; }
+.td-hint  { font-size:clamp(9px,1.4vw,11px); color:#666; margin-bottom:10px; }
+
 #gameover { position:fixed; inset:0; background:rgba(0,0,0,0.88); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:100; color:#fff; }
 #quit-menu { position:fixed; inset:0; background:rgba(0,0,0,0.82); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:99; color:#fff; }
 #quit-menu h2 { font-size:clamp(24px,5vw,52px); font-weight:900; color:#FFD700; text-shadow:3px 3px 0 #000; letter-spacing:3px; margin-bottom:10px; }
@@ -346,6 +379,18 @@ canvas { display:block; }
   <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
     <button class="go-btn" onclick="restartGame()">🔄 リトライ</button>
     <button class="go-btn secondary" onclick="goHome()">🏠 ホームへ</button>
+  </div>
+</div>
+
+<!-- TAKEDROP MODAL -->
+<div id="takedrop-modal" style="display:none">
+  <div class="td-panel">
+    <div class="td-title">🎁 タケドロップ！</div>
+    <div class="td-wave-info" id="td-wave-info">Wave 7 到達！</div>
+    <div class="td-hint">7 Wave ごとにドロップ獲得！</div>
+    <div class="td-cards" id="td-cards"></div>
+    <div class="td-total" id="td-total"></div>
+    <button class="go-btn" id="td-close-btn" style="display:none;margin-top:4px" onclick="closeTakeDrop()">✨ 受け取る！</button>
   </div>
 </div>
 
@@ -2880,16 +2925,78 @@ function startGame() {
   gamePaused = false;
   initGame();
 }
+// ===================== TAKEDROP =====================
+const DROP_RARITIES = [
+  { name:'コモン',         label:'COMMON',      color:'#90A4AE', gems:20   },
+  { name:'レア',           label:'RARE',         color:'#42A5F5', gems:80   },
+  { name:'ハイパーレア',   label:'HYPER RARE',  color:'#CE93D8', gems:200  },
+  { name:'ウルトラレア',   label:'ULTRA RARE',  color:'#FF8A65', gems:500  },
+  { name:'レジェンドレア', label:'LEGEND RARE', color:'#FFD700', gems:1500 },
+];
+// chance weights: COMMON=5, RARE=50, HYPER=25, ULTRA=15, LEGEND=5
+const DROP_WEIGHTS = [5,50,25,15,5];
+
+function rollDrop() {
+  const r=Math.random()*100; let c=0;
+  for (let i=0;i<DROP_RARITIES.length;i++) { c+=DROP_WEIGHTS[i]; if(r<c) return DROP_RARITIES[i]; }
+  return DROP_RARITIES[DROP_RARITIES.length-1];
+}
+
+function showTakeDrop(waveReached) {
+  const count=Math.floor(waveReached/7);
+  if (count<=0) return;
+  const drops=Array.from({length:count},()=>rollDrop());
+  const totalGems=drops.reduce((s,d)=>s+d.gems,0);
+  gemBank+=totalGems; saveGemBank(gemBank);
+
+  document.getElementById('td-wave-info').textContent=
+    `Wave ${waveReached} 到達！ドロップ × ${count}個`;
+  const container=document.getElementById('td-cards');
+  container.innerHTML='';
+  document.getElementById('td-total').textContent='';
+  document.getElementById('td-close-btn').style.display='none';
+  document.getElementById('takedrop-modal').style.display='flex';
+
+  drops.forEach((d,i)=>{
+    setTimeout(()=>{
+      const card=document.createElement('div');
+      card.className='td-card';
+      card.style.cssText=`border-color:${d.color};box-shadow:0 0 22px ${d.color}99;animation-delay:0s`;
+      card.innerHTML=`
+        <div class="tc-label" style="color:${d.color}">${d.label}</div>
+        <div class="tc-name">${d.name}</div>
+        <div class="tc-gems">💎 +${d.gems}</div>`;
+      container.appendChild(card);
+      sfxGem();
+      if(i===drops.length-1){
+        setTimeout(()=>{
+          document.getElementById('td-total').textContent=`💎 合計 +${totalGems} ジェム！`;
+          document.getElementById('td-close-btn').style.display='inline-block';
+        },500);
+      }
+    },i*550);
+  });
+}
+
+function closeTakeDrop() {
+  document.getElementById('takedrop-modal').style.display='none';
+  // Update gem bank display on game over screen
+  const gb=document.getElementById('gem-bank-disp');
+  if(gb) gb.textContent=gemBank;
+}
+
 function showGameOver() {
   const earned = gemCount;
   gemBank += earned; saveGemBank(gemBank);
   document.getElementById('go-score').textContent=`⭐ ${score} ポイント`;
   document.getElementById('go-gems').textContent=`💎 +${earned} ジェム獲得！（合計: ${gemBank}）`;
   document.getElementById('go-sub').textContent=`Wave ${wave} まで到達\n${CHARS[selectedChar].emoji} ${CHARS[selectedChar].name} で挑戦`;
-  document.getElementById('gameover').querySelector('h1').textContent='💥 GAME OVER 💥';
+  const dropCount=Math.floor(wave/7);
+  document.getElementById('gameover').querySelector('h1').textContent='💥 GAME OVER 💥'+(dropCount>0?`\n🎁 タケドロップ × ${dropCount}`:'');
   document.getElementById('quit-btn').style.display='none';
   showMobileControls(false);
   document.getElementById('gameover').style.display='flex';
+  if(dropCount>0) setTimeout(()=>showTakeDrop(wave), 1200);
 }
 function restartGame() {
   document.getElementById('gameover').style.display='none'; initGame();
@@ -2897,6 +3004,7 @@ function restartGame() {
 function goHome() {
   gameRunning=false; gamePaused=false; BGM.stop();
   document.getElementById('gameover').style.display='none';
+  document.getElementById('takedrop-modal').style.display='none';
   document.getElementById('quit-menu').style.display='none';
   document.getElementById('quit-btn').style.display='none';
   document.getElementById('ui').style.display='none';
@@ -2940,9 +3048,11 @@ function quitWithRewards() {
   document.getElementById('go-score').textContent = `⭐ ${score} ポイント`;
   document.getElementById('go-gems').textContent = `💎 +${earned} ジェム獲得！（合計: ${gemBank}）`;
   document.getElementById('go-sub').textContent = `Wave ${wave} で中断\n${CHARS[selectedChar].emoji} ${CHARS[selectedChar].name}`;
-  document.getElementById('gameover').querySelector('h1').textContent = '🏳 ゲーム中断';
+  const dropCount=Math.floor(wave/7);
+  document.getElementById('gameover').querySelector('h1').textContent='🏳 ゲーム中断'+(dropCount>0?`\n🎁 タケドロップ × ${dropCount}`:'');
   document.getElementById('gameover').style.display = 'flex';
   buildHomeScreen();
+  if(dropCount>0) setTimeout(()=>showTakeDrop(wave), 1200);
 }
 function loop() { if (gameRunning && !gamePaused) { update(); draw(); } requestAnimationFrame(loop); }
 buildHomeScreen();
