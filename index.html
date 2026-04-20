@@ -5,20 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
 <!-- ===== SEO ===== -->
-<meta name="google-site-verification" content="Ho0q5m9IuNQVXuknS0yrw-ToHmD4X6UMSnmRMU5HYIk" />
 <meta name="description" content="タケスタはブラウザで無料でプレイできる本格アクションゲーム！29体のキャラクターから選んで敵を倒し、ウェーブを生き残れ。スマホ・PC両対応。タケドロップでレアアイテムをゲット！">
 <meta name="keywords" content="タケスタ,ゲーム,ブラウザゲーム,無料ゲーム,アクションゲーム,スマホゲーム,オンラインゲーム,シューティング,タケスタゲーム">
 <meta name="author" content="タケスタ">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://takesta.vercel.app/">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/favicon.svg">
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#FFD700">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="タケスタ">
 
 <!-- Open Graph (SNS・Googleリッチ表示) -->
 <meta property="og:type" content="website">
@@ -327,6 +318,56 @@ canvas { display:block; }
 .td-total { font-size:clamp(14px,2.8vw,20px); font-weight:900; color:#FFD700; text-shadow:2px 2px 0 #000; margin-bottom:14px; min-height:28px; }
 .td-hint  { font-size:clamp(9px,1.4vw,11px); color:#666; margin-bottom:10px; }
 
+/* ===== NAME MODAL ===== */
+#name-modal {
+  position:fixed; inset:0; z-index:130; display:none;
+  flex-direction:column; align-items:center; justify-content:center;
+  background:rgba(4,0,18,0.97);
+}
+.nm-panel {
+  background:linear-gradient(155deg,#14003e 0%,#0d0d1a 55%,#1e0028 100%);
+  border:3px solid #FFD700; border-radius:24px;
+  padding:clamp(20px,4vw,36px) clamp(22px,5vw,44px);
+  text-align:center; max-width:min(92vw,440px); width:100%;
+  box-shadow:0 0 60px rgba(255,215,0,0.22);
+}
+.nm-title { font-size:clamp(20px,4vw,32px); font-weight:900; color:#FFD700; text-shadow:3px 3px 0 #000; margin-bottom:8px; }
+.nm-sub   { font-size:clamp(10px,1.6vw,13px); color:#aaa; margin-bottom:18px; }
+#nm-input {
+  width:100%; padding:12px 16px; font-size:clamp(16px,3vw,22px); font-weight:900;
+  background:rgba(255,255,255,0.07); border:3px solid #FFD700; border-radius:12px;
+  color:#fff; text-align:center; outline:none; margin-bottom:18px;
+  font-family:'Arial Black',sans-serif;
+}
+#nm-input::placeholder { color:#555; }
+.nm-btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+
+/* ===== RANKING SCREEN ===== */
+#ranking-screen {
+  position:fixed; inset:0; z-index:125; display:none;
+  flex-direction:column; align-items:center;
+  background:rgba(4,0,18,0.98); overflow-y:auto;
+  padding:20px 10px 30px;
+}
+.rk-title { font-size:clamp(22px,5vw,42px); font-weight:900; color:#FFD700; text-shadow:3px 3px 0 #000; letter-spacing:4px; margin-bottom:6px; }
+.rk-sub   { font-size:clamp(10px,1.5vw,13px); color:#888; margin-bottom:16px; letter-spacing:2px; }
+.rk-filter { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:14px; }
+.rk-filter-btn {
+  background:rgba(255,255,255,0.06); border:2px solid #555; border-radius:20px;
+  padding:4px 12px; color:#aaa; font-size:clamp(10px,1.4vw,12px); font-weight:900;
+  cursor:pointer; transition:all 0.15s; font-family:'Arial Black',sans-serif;
+}
+.rk-filter-btn.active, .rk-filter-btn:hover { border-color:#FFD700; color:#FFD700; background:rgba(255,215,0,0.08); }
+.rk-table { width:100%; max-width:640px; border-collapse:collapse; }
+.rk-table th { font-size:clamp(9px,1.3vw,11px); color:#FFD700; border-bottom:2px solid #333; padding:6px 8px; text-align:left; }
+.rk-table td { font-size:clamp(10px,1.5vw,13px); color:#ddd; padding:7px 8px; border-bottom:1px solid #1a1a2e; vertical-align:middle; }
+.rk-table tr:nth-child(1) td { color:#FFD700; }
+.rk-table tr:nth-child(2) td { color:#C0C0C0; }
+.rk-table tr:nth-child(3) td { color:#CD7F32; }
+.rk-rank { font-weight:900; width:28px; }
+.rk-empty { color:#555; text-align:center; padding:30px; font-size:14px; }
+.rk-back-btn { margin-top:18px; }
+
 #gameover { position:fixed; inset:0; background:rgba(0,0,0,0.88); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:100; color:#fff; }
 #quit-menu { position:fixed; inset:0; background:rgba(0,0,0,0.82); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:99; color:#fff; }
 #quit-menu h2 { font-size:clamp(24px,5vw,52px); font-weight:900; color:#FFD700; text-shadow:3px 3px 0 #000; letter-spacing:3px; margin-bottom:10px; }
@@ -374,7 +415,8 @@ canvas { display:block; }
         <div id="power-area"></div>
       </div>
     </div>
-    <button class="play-btn" id="play-btn" onclick="startGame()">▶ バトル開始！</button>
+    <button class="play-btn" id="play-btn" onclick="showNameModal()">▶ バトル開始！</button>
+    <button class="play-btn" style="background:linear-gradient(135deg,#1a1040,#2d1b69);border-color:#a78bfa;color:#a78bfa;font-size:clamp(11px,1.6vw,15px);padding:clamp(5px,1vh,9px) clamp(16px,2.5vw,30px);margin-bottom:4px" onclick="showRankingScreen()">🏆 ランキング</button>
     <div class="controls-hint">移動:WASD / スペース:射撃ON・OFF / E:スーパー発動 / M:全体マップ</div>
   </div>
 </div>
@@ -451,6 +493,39 @@ canvas { display:block; }
     <div class="td-total" id="td-total"></div>
     <button class="go-btn" id="td-close-btn" style="display:none;margin-top:4px" onclick="closeTakeDrop()">✨ 受け取る！</button>
   </div>
+</div>
+
+<!-- NAME INPUT MODAL -->
+<div id="name-modal" style="display:none">
+  <div class="nm-panel">
+    <div class="nm-title">⚡ プレイヤー名を入力 ⚡</div>
+    <div class="nm-sub">ランキングに登録されます</div>
+    <input id="nm-input" type="text" maxlength="12" placeholder="名前を入力..." autocomplete="off" spellcheck="false">
+    <div class="nm-btns">
+      <button class="go-btn" onclick="confirmName()">▶ スタート！</button>
+      <button class="go-btn secondary" onclick="cancelNameModal()">✕ キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- RANKING SCREEN -->
+<div id="ranking-screen" style="display:none">
+  <div class="rk-title">🏆 ランキング 🏆</div>
+  <div class="rk-sub">全プレイヤーのベスト記録</div>
+  <div class="rk-filter" id="rk-filter"></div>
+  <table class="rk-table" id="rk-table">
+    <thead><tr>
+      <th class="rk-rank">#</th>
+      <th>プレイヤー</th>
+      <th>キャラ</th>
+      <th>スコア</th>
+      <th>Wave</th>
+      <th>日時</th>
+    </tr></thead>
+    <tbody id="rk-tbody"></tbody>
+  </table>
+  <div id="rk-empty" class="rk-empty" style="display:none">まだ記録がありません。プレイして記録を作ろう！</div>
+  <button class="go-btn secondary rk-back-btn" onclick="hideRankingScreen()">← ホームへ戻る</button>
 </div>
 
 <script>
@@ -2018,6 +2093,7 @@ const WORLD_W=1600, WORLD_H=1200;
 let player,bullets,enemies,gems,mines,turrets,particles,walls;
 let gamePaused = false;
 let score,gemCount,superGems,wave,waveTimer,gameRunning;
+let playerName = localStorage.getItem('takesta_player_name') || '';
 let camX,camY,screenShake=0,zoomOut=false,frameCount=0,cameraZoom=1;
 const WALL_COLOR='#5D4037', WALL_ACCENT='#795548';
 
@@ -3028,6 +3104,28 @@ function draw() {
 }
 
 // ===================== FLOW =====================
+function showNameModal() {
+  const inp = document.getElementById('nm-input');
+  inp.value = playerName;
+  document.getElementById('name-modal').style.display = 'flex';
+  setTimeout(() => inp.focus(), 100);
+}
+function cancelNameModal() {
+  document.getElementById('name-modal').style.display = 'none';
+}
+function confirmName() {
+  const val = document.getElementById('nm-input').value.trim();
+  if (!val) { document.getElementById('nm-input').focus(); return; }
+  playerName = val;
+  localStorage.setItem('takesta_player_name', playerName);
+  document.getElementById('name-modal').style.display = 'none';
+  startGame();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('nm-input');
+  if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') confirmName(); });
+});
+
 function startGame() {
   if (AC.state==='suspended') AC.resume();
   document.getElementById('home').style.display='none';
@@ -3041,6 +3139,63 @@ function startGame() {
   showMobileControls(true);
   gamePaused = false;
   initGame();
+}
+
+// ===================== RANKING =====================
+function loadRankings() {
+  try { return JSON.parse(localStorage.getItem('takesta_rankings') || '[]'); } catch(e) { return []; }
+}
+function saveRankingEntry(name, charId, charEmoji, charName, scoreVal, waveVal) {
+  const rankings = loadRankings();
+  rankings.push({ name, charId, charEmoji, charName, score: scoreVal, wave: waveVal, date: new Date().toLocaleDateString('ja-JP') });
+  rankings.sort((a,b) => b.score - a.score);
+  if (rankings.length > 200) rankings.length = 200;
+  localStorage.setItem('takesta_rankings', JSON.stringify(rankings));
+}
+let rankingFilter = 'all';
+function showRankingScreen() {
+  rankingFilter = 'all';
+  renderRankingScreen();
+  document.getElementById('ranking-screen').style.display = 'flex';
+}
+function hideRankingScreen() {
+  document.getElementById('ranking-screen').style.display = 'none';
+}
+function renderRankingScreen() {
+  const all = loadRankings();
+  const filterDiv = document.getElementById('rk-filter');
+  filterDiv.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'rk-filter-btn' + (rankingFilter === 'all' ? ' active' : '');
+  allBtn.textContent = '全キャラ';
+  allBtn.onclick = () => { rankingFilter = 'all'; renderRankingScreen(); };
+  filterDiv.appendChild(allBtn);
+  const chars = [...new Set(all.map(r => r.charId))];
+  chars.forEach(cid => {
+    const entry = all.find(r => r.charId === cid);
+    const btn = document.createElement('button');
+    btn.className = 'rk-filter-btn' + (rankingFilter === cid ? ' active' : '');
+    btn.textContent = entry.charEmoji + ' ' + entry.charName;
+    btn.onclick = () => { rankingFilter = cid; renderRankingScreen(); };
+    filterDiv.appendChild(btn);
+  });
+  const filtered = rankingFilter === 'all' ? all : all.filter(r => r.charId === rankingFilter);
+  const tbody = document.getElementById('rk-tbody');
+  tbody.innerHTML = '';
+  const empty = document.getElementById('rk-empty');
+  if (filtered.length === 0) {
+    empty.style.display = 'block';
+    document.getElementById('rk-table').style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  document.getElementById('rk-table').style.display = '';
+  filtered.slice(0, 50).forEach((r, i) => {
+    const tr = document.createElement('tr');
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'';
+    tr.innerHTML = `<td class="rk-rank">${medal}</td><td>${r.name}</td><td>${r.charEmoji} ${r.charName}</td><td>⭐ ${r.score.toLocaleString()}</td><td>🌊 ${r.wave}</td><td>${r.date}</td>`;
+    tbody.appendChild(tr);
+  });
 }
 // ===================== TAKEDROP =====================
 const DROP_RARITIES = [
@@ -3060,7 +3215,7 @@ function rollDrop() {
 }
 
 function showTakeDrop(waveReached) {
-  const count=Math.floor(waveReached/7);
+  const count=Math.floor(waveReached/5);
   if (count<=0) return;
   const drops=Array.from({length:count},()=>rollDrop());
   const totalGems=drops.reduce((s,d)=>s+d.gems,0);
@@ -3105,9 +3260,11 @@ function closeTakeDrop() {
 function showGameOver() {
   const earned = gemCount;
   gemBank += earned; saveGemBank(gemBank);
+  const ch = CHARS[selectedChar];
+  saveRankingEntry(playerName || '名無し', ch.id || String(selectedChar), ch.emoji, ch.name, score, wave);
   document.getElementById('go-score').textContent=`⭐ ${score} ポイント`;
   document.getElementById('go-gems').textContent=`💎 +${earned} ジェム獲得！（合計: ${gemBank}）`;
-  document.getElementById('go-sub').textContent=`Wave ${wave} まで到達\n${CHARS[selectedChar].emoji} ${CHARS[selectedChar].name} で挑戦`;
+  document.getElementById('go-sub').textContent=`${playerName || '名無し'} / Wave ${wave} まで到達\n${CHARS[selectedChar].emoji} ${CHARS[selectedChar].name} で挑戦`;
   const dropCount=Math.floor(wave/5);
   document.getElementById('gameover').querySelector('h1').textContent='💥 GAME OVER 💥'+(dropCount>0?`\n🎁 タケドロップ × ${dropCount}`:'');
   document.getElementById('quit-btn').style.display='none';
@@ -3150,6 +3307,8 @@ function resumeGame() {
 function quitWithRewards() {
   const earned = gemCount;
   gemBank += earned; saveGemBank(gemBank);
+  const ch2 = CHARS[selectedChar];
+  saveRankingEntry(playerName || '名無し', ch2.id || String(selectedChar), ch2.emoji, ch2.name, score, wave);
   gamePaused = false;
   gameRunning = false;
   BGM.stop();
@@ -3164,7 +3323,7 @@ function quitWithRewards() {
   // show gameover screen with "quit" framing
   document.getElementById('go-score').textContent = `⭐ ${score} ポイント`;
   document.getElementById('go-gems').textContent = `💎 +${earned} ジェム獲得！（合計: ${gemBank}）`;
-  document.getElementById('go-sub').textContent = `Wave ${wave} で中断\n${CHARS[selectedChar].emoji} ${CHARS[selectedChar].name}`;
+  document.getElementById('go-sub').textContent = `${playerName || '名無し'} / Wave ${wave} で中断\n${CHARS[selectedChar].emoji} ${CHARS[selectedChar].name}`;
   const dropCount=Math.floor(wave/5);
   document.getElementById('gameover').querySelector('h1').textContent='🏳 ゲーム中断'+(dropCount>0?`\n🎁 タケドロップ × ${dropCount}`:'');
   document.getElementById('gameover').style.display = 'flex';
@@ -3174,10 +3333,6 @@ function quitWithRewards() {
 function loop() { if (gameRunning && !gamePaused) { update(); draw(); } requestAnimationFrame(loop); }
 buildHomeScreen();
 loop();
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {});
-}
 </script>
 </body>
 </html>
