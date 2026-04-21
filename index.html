@@ -528,6 +528,22 @@ canvas { display:block; }
   <button class="go-btn secondary rk-back-btn" onclick="hideRankingScreen()">← ホームへ戻る</button>
 </div>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyDtKhOvU4V6IafUziKCYwYl21cg3HyfG-Q",
+  authDomain: "takesta-1f474.firebaseapp.com",
+  databaseURL: "https://takesta-1f474-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "takesta-1f474",
+  storageBucket: "takesta-1f474.firebasestorage.app",
+  messagingSenderId: "852770835452",
+  appId: "1:852770835452:web:08691b82da7ecc6b8ac079"
+});
+const db = firebase.database();
+</script>
+
 <script>
 // ===================== CANVAS =====================
 const canvas = document.getElementById('c');
@@ -3142,42 +3158,52 @@ function startGame() {
 }
 
 // ===================== RANKING =====================
-function loadRankings() {
-  try { return JSON.parse(localStorage.getItem('takesta_rankings') || '[]'); } catch(e) { return []; }
-}
 function saveRankingEntry(name, charId, charEmoji, charName, scoreVal, waveVal) {
-  const rankings = loadRankings();
-  rankings.push({ name, charId, charEmoji, charName, score: scoreVal, wave: waveVal, date: new Date().toLocaleDateString('ja-JP') });
-  rankings.sort((a,b) => b.score - a.score);
-  if (rankings.length > 200) rankings.length = 200;
-  localStorage.setItem('takesta_rankings', JSON.stringify(rankings));
+  const entry = { name, charId, charEmoji, charName, score: scoreVal, wave: waveVal, date: new Date().toLocaleDateString('ja-JP'), ts: Date.now() };
+  db.ref('rankings').push(entry).catch(() => {});
 }
+
 let rankingFilter = 'all';
+let rankingAllData = [];
+
 function showRankingScreen() {
   rankingFilter = 'all';
-  renderRankingScreen();
   document.getElementById('ranking-screen').style.display = 'flex';
+  document.getElementById('rk-tbody').innerHTML = '';
+  document.getElementById('rk-empty').style.display = 'none';
+  document.getElementById('rk-table').style.display = 'none';
+  document.getElementById('rk-filter').innerHTML = '<span style="color:#888;font-size:12px">読み込み中...</span>';
+  db.ref('rankings').orderByChild('score').limitToLast(200).once('value', snap => {
+    const raw = [];
+    snap.forEach(child => raw.push(child.val()));
+    rankingAllData = raw.sort((a, b) => b.score - a.score);
+    renderRankingTable();
+  });
 }
+
 function hideRankingScreen() {
   document.getElementById('ranking-screen').style.display = 'none';
 }
-function renderRankingScreen() {
-  const all = loadRankings();
+
+function renderRankingTable() {
+  const all = rankingAllData;
   const filterDiv = document.getElementById('rk-filter');
   filterDiv.innerHTML = '';
   const allBtn = document.createElement('button');
   allBtn.className = 'rk-filter-btn' + (rankingFilter === 'all' ? ' active' : '');
   allBtn.textContent = '全キャラ';
-  allBtn.onclick = () => { rankingFilter = 'all'; renderRankingScreen(); };
+  allBtn.onclick = () => { rankingFilter = 'all'; renderRankingTable(); };
   filterDiv.appendChild(allBtn);
-  const chars = [...new Set(all.map(r => r.charId))];
-  chars.forEach(cid => {
-    const entry = all.find(r => r.charId === cid);
-    const btn = document.createElement('button');
-    btn.className = 'rk-filter-btn' + (rankingFilter === cid ? ' active' : '');
-    btn.textContent = entry.charEmoji + ' ' + entry.charName;
-    btn.onclick = () => { rankingFilter = cid; renderRankingScreen(); };
-    filterDiv.appendChild(btn);
+  const seen = new Set();
+  all.forEach(r => {
+    if (!seen.has(r.charId)) {
+      seen.add(r.charId);
+      const btn = document.createElement('button');
+      btn.className = 'rk-filter-btn' + (rankingFilter === r.charId ? ' active' : '');
+      btn.textContent = r.charEmoji + ' ' + r.charName;
+      btn.onclick = () => { rankingFilter = r.charId; renderRankingTable(); };
+      filterDiv.appendChild(btn);
+    }
   });
   const filtered = rankingFilter === 'all' ? all : all.filter(r => r.charId === rankingFilter);
   const tbody = document.getElementById('rk-tbody');
@@ -3193,7 +3219,7 @@ function renderRankingScreen() {
   filtered.slice(0, 50).forEach((r, i) => {
     const tr = document.createElement('tr');
     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'';
-    tr.innerHTML = `<td class="rk-rank">${medal}</td><td>${r.name}</td><td>${r.charEmoji} ${r.charName}</td><td>⭐ ${r.score.toLocaleString()}</td><td>🌊 ${r.wave}</td><td>${r.date}</td>`;
+    tr.innerHTML = `<td class="rk-rank">${medal}</td><td>${r.name}</td><td>${r.charEmoji} ${r.charName}</td><td>⭐ ${r.score.toLocaleString()}</td><td>🌊 ${r.wave}</td><td>${r.date||''}</td>`;
     tbody.appendChild(tr);
   });
 }
