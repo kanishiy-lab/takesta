@@ -496,8 +496,8 @@ canvas { display:block; }
 <canvas id="minimap" style="display:none"></canvas>
 <div id="zoom-btn" style="display:none" onclick="toggleZoom()">🗺 全体図 [M]</div>
 <div id="zoom-controls" style="display:none">
-  <button class="zoom-ctrl-btn" onclick="zoomIn()">＋</button>
-  <button class="zoom-ctrl-btn" onclick="zoomOut()">－</button>
+  <button class="zoom-ctrl-btn" onclick="zoomLevelIn()">＋</button>
+  <button class="zoom-ctrl-btn" onclick="zoomLevelOut()">－</button>
 </div>
 <div id="char-hud" style="display:none">
   <div class="hud-emoji" id="hud-emoji">🌸</div>
@@ -2497,8 +2497,8 @@ function toggleZoom() {
   document.getElementById('zoom-btn').textContent=zoomOut?'🔍 通常表示 [M]':'🗺 全体図 [M]';
 }
 const ZOOM_LEVELS=[0.6,0.8,1.0,1.3,1.6];
-function zoomIn()  { const i=ZOOM_LEVELS.findIndex(z=>z>cameraZoom-0.05); cameraZoom=ZOOM_LEVELS[Math.min(i<0?ZOOM_LEVELS.length-1:i,ZOOM_LEVELS.length-1)]; }
-function zoomOut() { const i=[...ZOOM_LEVELS].reverse().findIndex(z=>z<cameraZoom+0.05); cameraZoom=ZOOM_LEVELS[Math.max(ZOOM_LEVELS.length-1-(i<0?ZOOM_LEVELS.length-1:i),0)]; }
+function zoomLevelIn()  { const i=ZOOM_LEVELS.findIndex(z=>z>cameraZoom-0.05); cameraZoom=ZOOM_LEVELS[Math.min(i<0?ZOOM_LEVELS.length-1:i,ZOOM_LEVELS.length-1)]; }
+function zoomLevelOut() { const i=[...ZOOM_LEVELS].reverse().findIndex(z=>z<cameraZoom+0.05); cameraZoom=ZOOM_LEVELS[Math.max(ZOOM_LEVELS.length-1-(i<0?ZOOM_LEVELS.length-1:i),0)]; }
 
 // ===================== UPDATE =====================
 function updateSuperUI() {
