@@ -149,6 +149,9 @@ canvas { display:block; }
 .stat-val  { font-size:16px; font-weight:900; line-height:1.2; }
 .wave-box { color:#FF6B35; border-color:#FF6B35; }
 .gem-box  { color:#7CFC00; border-color:#7CFC00; }
+.time-box { color:#00BFFF; border-color:#00BFFF; }
+.time-box.urgent { color:#FF4444; border-color:#FF4444; animation:timePulse 0.5s infinite alternate; }
+@keyframes timePulse { from{opacity:1} to{opacity:0.4} }
 
 /* Super gauge */
 #super-bar-wrap {
@@ -307,19 +310,48 @@ canvas { display:block; }
   margin-bottom:4px; animation:titlePulse 2s ease-in-out infinite alternate;
 }
 .td-wave-info { font-size:clamp(10px,1.8vw,13px); color:#a78bfa; font-weight:900; margin-bottom:16px; letter-spacing:1px; }
-.td-cards { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-bottom:14px; min-height:40px; }
-.td-card {
-  display:flex; flex-direction:column; align-items:center;
-  border:3px solid; border-radius:16px; padding:clamp(10px,2vw,16px) clamp(14px,3vw,22px);
-  min-width:clamp(90px,18vw,140px); background:rgba(255,255,255,0.04);
-  animation:cardReveal 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
-}
-@keyframes cardReveal { from{transform:scale(0) rotate(-15deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
-.tc-label { font-size:clamp(8px,1.3vw,10px); font-weight:900; letter-spacing:2px; margin-bottom:3px; }
-.tc-name  { font-size:clamp(12px,2.2vw,16px); color:#fff; font-weight:900; margin-bottom:6px; text-shadow:1px 1px 0 #000; }
-.tc-gems  { font-size:clamp(15px,2.8vw,21px); font-weight:900; color:#7CFC00; text-shadow:1px 1px 0 #000; }
+.td-cards { display:flex; flex-wrap:wrap; justify-content:center; gap:14px; margin-bottom:14px; min-height:40px; }
 .td-total { font-size:clamp(14px,2.8vw,20px); font-weight:900; color:#FFD700; text-shadow:2px 2px 0 #000; margin-bottom:14px; min-height:28px; }
 .td-hint  { font-size:clamp(9px,1.4vw,11px); color:#666; margin-bottom:10px; }
+
+/* ===== SLOT MACHINE ===== */
+.slot-machine {
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+}
+.slot-window {
+  width:clamp(100px,18vw,140px); height:clamp(90px,13vh,110px);
+  border:3px solid #555; border-radius:12px; overflow:hidden;
+  background:#000; position:relative;
+  box-shadow:inset 0 0 18px rgba(0,0,0,0.8);
+}
+.slot-window::before,.slot-window::after {
+  content:''; position:absolute; left:0; right:0; height:30%; z-index:2; pointer-events:none;
+}
+.slot-window::before { top:0; background:linear-gradient(to bottom,rgba(0,0,0,0.85),transparent); }
+.slot-window::after  { bottom:0; background:linear-gradient(to top,rgba(0,0,0,0.85),transparent); }
+.slot-reel {
+  display:flex; flex-direction:column; align-items:center;
+  transition:transform 0s;
+}
+.slot-item {
+  width:100%; height:clamp(90px,13vh,110px);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+.slot-item .si-label { font-size:clamp(7px,1.1vw,9px); font-weight:900; letter-spacing:2px; }
+.slot-item .si-name  { font-size:clamp(10px,1.6vw,13px); color:#fff; font-weight:900; margin:2px 0; text-shadow:1px 1px 0 #000; }
+.slot-item .si-gems  { font-size:clamp(11px,1.8vw,14px); font-weight:900; color:#7CFC00; }
+.slot-highlight {
+  position:absolute; left:0; right:0; top:50%; transform:translateY(-50%);
+  height:clamp(90px,13vh,110px); border-top:2px solid rgba(255,215,0,0.6);
+  border-bottom:2px solid rgba(255,215,0,0.6); pointer-events:none; z-index:3;
+}
+.slot-result-label {
+  font-size:clamp(9px,1.3vw,11px); font-weight:900; letter-spacing:2px;
+  padding:2px 8px; border-radius:6px; background:rgba(0,0,0,0.5);
+  opacity:0; transition:opacity 0.4s;
+}
+.slot-result-label.show { opacity:1; }
 
 /* ===== NAME MODAL ===== */
 #name-modal {
@@ -452,6 +484,7 @@ canvas { display:block; }
 <div id="ui" style="display:none">
   <div class="stat-box"><div class="stat-lbl">❤️ HP</div><div class="stat-val" id="hp">100</div></div>
   <div class="stat-box wave-box"><div class="stat-lbl">🌊 WAVE</div><div class="stat-val" id="wave">1</div></div>
+  <div class="stat-box time-box" id="time-box"><div class="stat-lbl">⏱ TIME</div><div class="stat-val" id="wave-time">4:00</div></div>
   <div class="stat-box"><div class="stat-lbl">⭐ スコア</div><div class="stat-val" id="score">0</div></div>
   <div class="stat-box gem-box"><div class="stat-lbl">💎 ジェム</div><div class="stat-val" id="gems">0</div></div>
 </div>
@@ -2117,6 +2150,7 @@ const WORLD_W=1600, WORLD_H=1200;
 let player,bullets,enemies,gems,mines,turrets,particles,walls;
 let gamePaused = false;
 let score,gemCount,superGems,wave,waveTimer,gameRunning;
+let waveTimeLeft=0, waveTimerTick=0;
 let playerName = localStorage.getItem('takesta_player_name') || '';
 let camX,camY,screenShake=0,zoomOut=false,frameCount=0,cameraZoom=1;
 const WALL_COLOR='#5D4037', WALL_ACCENT='#795548';
@@ -2271,6 +2305,7 @@ function initGame() {
   bullets=[]; enemies=[]; gems=[]; mines=[]; turrets=[]; particles=[];
   walls=makeWalls();
   score=0; gemCount=0; superGems=0; wave=1; waveTimer=0;
+  waveTimeLeft=getWaveTime(1); waveTimerTick=0;
   gameRunning=true; screenShake=0; frameCount=0; cameraZoom=1;
   const mab=document.getElementById('mobile-auto-btn'); if(mab) mab.textContent='🔫 AUTO: OFF';
   camX=player.x-W/2; camY=player.y-H/2;
@@ -2283,7 +2318,9 @@ function initGame() {
   document.getElementById('super-need').textContent=ch.superCost;
   document.getElementById('super-ready-label').style.display='none';
 }
+function getWaveTime(w) { return Math.max(60, 240 - (w-1)*5); }
 function spawnWave() {
+  waveTimeLeft=getWaveTime(wave); waveTimerTick=0;
   sfxWave(); const n=wave*3+2;
   for (let i=0;i<n;i++) {
     let type='basic'; const r=Math.random();
@@ -2480,6 +2517,11 @@ function updateUI() {
   document.getElementById('wave').textContent=wave;
   document.getElementById('score').textContent=score;
   document.getElementById('gems').textContent=gemCount;
+  const m=Math.floor(waveTimeLeft/60), s=waveTimeLeft%60;
+  document.getElementById('wave-time').textContent=m+':'+(s<10?'0':'')+s;
+  const tb=document.getElementById('time-box');
+  if(waveTimeLeft<=30&&enemies.length>0) tb.classList.add('urgent');
+  else tb.classList.remove('urgent');
   updateSuperUI();
 }
 
@@ -2730,7 +2772,13 @@ function update() {
     if (p.life<=0) particles.splice(i,1);
   }
 
-  // Wave
+  // Wave timer countdown (60fps)
+  if (enemies.length>0) {
+    waveTimerTick++;
+    if (waveTimerTick>=60) { waveTimerTick=0; waveTimeLeft=Math.max(0,waveTimeLeft-1); }
+    if (waveTimeLeft<=0) { player.hp=Math.max(0,player.hp-20); waveTimeLeft=getWaveTime(wave); waveTimerTick=0; sfxDie(); }
+  }
+  // Wave clear
   if (enemies.length===0) { waveTimer++; if(waveTimer>120){wave++;waveTimer=0;spawnWave();BGM.switchRandom();} }
   if (player.hp<=0) { gameRunning=false; BGM.stop(); showGameOver(); }
   updateUI();
@@ -3238,32 +3286,71 @@ function showTakeDrop(waveReached) {
   const totalGems=drops.reduce((s,d)=>s+d.gems,0);
   gemBank+=totalGems; saveGemBank(gemBank);
 
-  document.getElementById('td-wave-info').textContent=
-    `Wave ${waveReached} 到達！ドロップ × ${count}個`;
+  document.getElementById('td-wave-info').textContent=`Wave ${waveReached} 到達！ドロップ × ${count}個`;
   const container=document.getElementById('td-cards');
   container.innerHTML='';
   document.getElementById('td-total').textContent='';
   document.getElementById('td-close-btn').style.display='none';
   document.getElementById('takedrop-modal').style.display='flex';
 
-  drops.forEach((d,i)=>{
+  drops.forEach((drop, slotIdx) => {
+    // スロットマシンのDOM作成
+    const machine=document.createElement('div');
+    machine.className='slot-machine';
+    const win=document.createElement('div');
+    win.className='slot-window';
+    const highlight=document.createElement('div');
+    highlight.className='slot-highlight';
+    const reel=document.createElement('div');
+    reel.className='slot-reel';
+    const itemH = Math.round(win.getBoundingClientRect().height)||100;
+
+    // スロットのアイテムリスト（シャッフル用ダミー + 結果）
+    const spinItems=[...DROP_RARITIES,...DROP_RARITIES,...DROP_RARITIES, drop];
+    spinItems.forEach(item=>{
+      const el=document.createElement('div');
+      el.className='slot-item';
+      el.style.background=`radial-gradient(ellipse at 50% 40%,${item.color}22,transparent)`;
+      el.innerHTML=`<div class="si-label" style="color:${item.color}">${item.label}</div>
+        <div class="si-name">${item.name}</div>
+        <div class="si-gems">💎 +${item.gems}</div>`;
+      reel.appendChild(el);
+    });
+    win.appendChild(reel);
+    win.appendChild(highlight);
+
+    const resultLabel=document.createElement('div');
+    resultLabel.className='slot-result-label';
+    resultLabel.style.color=drop.color;
+    resultLabel.textContent=drop.label;
+    machine.appendChild(win);
+    machine.appendChild(resultLabel);
+    container.appendChild(machine);
+
+    // スロットアニメーション開始
+    const startDelay=slotIdx*900;
     setTimeout(()=>{
-      const card=document.createElement('div');
-      card.className='td-card';
-      card.style.cssText=`border-color:${d.color};box-shadow:0 0 22px ${d.color}99;animation-delay:0s`;
-      card.innerHTML=`
-        <div class="tc-label" style="color:${d.color}">${d.label}</div>
-        <div class="tc-name">${d.name}</div>
-        <div class="tc-gems">💎 +${d.gems}</div>`;
-      container.appendChild(card);
+      const ITEM_H=100;
+      const totalItems=spinItems.length;
+      const finalOffset=(totalItems-1)*ITEM_H;
+      // 高速スクロール → 減速 → 停止
+      const duration=1800+slotIdx*200;
+      reel.style.transition=`transform ${duration}ms cubic-bezier(0.15,0.0,0.1,1.0)`;
+      reel.style.transform=`translateY(-${finalOffset}px)`;
       sfxGem();
-      if(i===drops.length-1){
-        setTimeout(()=>{
-          document.getElementById('td-total').textContent=`💎 合計 +${totalGems} ジェム！`;
-          document.getElementById('td-close-btn').style.display='inline-block';
-        },500);
-      }
-    },i*550);
+      setTimeout(()=>{
+        resultLabel.classList.add('show');
+        win.style.borderColor=drop.color;
+        win.style.boxShadow=`0 0 28px ${drop.color}99, inset 0 0 12px ${drop.color}33`;
+        sfxGem();
+        if(slotIdx===drops.length-1){
+          setTimeout(()=>{
+            document.getElementById('td-total').textContent=`💎 合計 +${totalGems} ジェム！`;
+            document.getElementById('td-close-btn').style.display='inline-block';
+          },600);
+        }
+      }, duration+100);
+    }, startDelay);
   });
 }
 
