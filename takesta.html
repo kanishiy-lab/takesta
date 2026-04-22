@@ -170,6 +170,8 @@ canvas { display:block; }
 
 #minimap { position:fixed; bottom:60px; right:12px; width:180px; height:135px; border:3px solid #FFD700; border-radius:8px; background:rgba(0,0,0,0.7); z-index:10; pointer-events:none; }
 #zoom-btn { position:fixed; bottom:205px; right:12px; background:rgba(0,0,0,0.7); border:3px solid #FFD700; border-radius:8px; padding:4px 9px; color:#FFD700; font-size:11px; font-weight:900; cursor:pointer; z-index:10; }
+#zoom-controls { position:fixed; bottom:10px; right:12px; display:none; flex-direction:row; gap:5px; z-index:11; }
+.zoom-ctrl-btn { background:rgba(0,0,0,0.75); border:2px solid #FFD700; border-radius:8px; padding:5px 11px; color:#FFD700; font-size:16px; font-weight:900; cursor:pointer; line-height:1; touch-action:manipulation; }
 #char-hud { position:fixed; bottom:60px; left:12px; background:rgba(0,0,0,0.7); border:3px solid; border-radius:12px; padding:7px 12px; z-index:10; pointer-events:none; display:flex; align-items:center; gap:7px; }
 #char-hud .hud-emoji { font-size:22px; }
 #char-hud .hud-info { display:flex; flex-direction:column; }
@@ -227,6 +229,7 @@ canvas { display:block; }
 @media (pointer:coarse) {
   #zoom-btn { display:none !important; }
   .controls-hint { display:none; }
+  #zoom-controls { bottom:200px; right:12px; }
 }
 
 /* ===== MOBILE LANDSCAPE ===== */
@@ -459,6 +462,10 @@ canvas { display:block; }
 </div>
 <canvas id="minimap" style="display:none"></canvas>
 <div id="zoom-btn" style="display:none" onclick="toggleZoom()">🗺 全体図 [M]</div>
+<div id="zoom-controls" style="display:none">
+  <button class="zoom-ctrl-btn" onclick="zoomIn()">＋</button>
+  <button class="zoom-ctrl-btn" onclick="zoomOut()">－</button>
+</div>
 <div id="char-hud" style="display:none">
   <div class="hud-emoji" id="hud-emoji">🌸</div>
   <div class="hud-info">
@@ -2141,20 +2148,20 @@ function makeWalls() {
   // Border
   w.push({x:0,y:0,w:WORLD_W,h:30,type:'border'},{x:0,y:WORLD_H-30,w:WORLD_W,h:30,type:'border'},
          {x:0,y:0,w:30,h:WORLD_H,type:'border'},{x:WORLD_W-30,y:0,w:30,h:WORLD_H,type:'border'});
-  // Symmetric layout: 4 corner towers
+  // Symmetric layout: 4 corner towers（壁から離して通路を広く）
   w.push(
-    {x:80,y:80,w:140,h:140},{x:1380,y:80,w:140,h:140},
-    {x:80,y:980,w:140,h:140},{x:1380,y:980,w:140,h:140},
+    {x:120,y:120,w:140,h:140},{x:1340,y:120,w:140,h:140},
+    {x:120,y:940,w:140,h:140},{x:1340,y:940,w:140,h:140},
   );
-  // Top/bottom center gates
+  // Top/bottom center gates（壁から離す）
   w.push(
-    {x:580,y:60,w:180,h:80},{x:840,y:60,w:180,h:80},
-    {x:580,y:1060,w:180,h:80},{x:840,y:1060,w:180,h:80},
+    {x:580,y:100,w:180,h:70},{x:840,y:100,w:180,h:70},
+    {x:580,y:1030,w:180,h:70},{x:840,y:1030,w:180,h:70},
   );
-  // Left/right side barriers
+  // Left/right side barriers（壁から離す）
   w.push(
-    {x:50,y:360,w:90,h:100},{x:50,y:740,w:90,h:100},
-    {x:1460,y:360,w:90,h:100},{x:1460,y:740,w:90,h:100},
+    {x:100,y:360,w:80,h:100},{x:100,y:740,w:80,h:100},
+    {x:1420,y:360,w:80,h:100},{x:1420,y:740,w:80,h:100},
   );
   // Upper quadrant obstacles (symmetric L-shapes)
   w.push(
@@ -2364,7 +2371,6 @@ window.addEventListener('orientationchange', () => {
 
 let lJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0};
 let rJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0,shooting:false};
-let pinchDist=0,pinchActive=false;
 const JOY_R=65; // ノブの最大移動半径(px)
 const JOY_DEAD=6; // デッドゾーン(px) - この以内は無入力扱い
 
@@ -2392,18 +2398,6 @@ function resetJoy(elId,isRight) {
 
 function handleTouchStart(e) {
   if (!gameRunning||gamePaused) return; e.preventDefault();
-  // 2本指 → ピンチズーム開始
-  if (e.touches.length===2) {
-    pinchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-    pinchActive=true;
-    resetJoy('joystick-left',false); resetJoy('joystick-right',true);
-    lJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0};
-    rJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0,shooting:false};
-    document.getElementById('lknob').style.transform='translate(-50%,-50%)';
-    document.getElementById('rknob').style.transform='translate(-50%,-50%)';
-    return;
-  }
-  pinchActive=false;
   for (const t of e.changedTouches) {
     if (t.clientX<W/2&&!lJoy.active) {
       lJoy={active:true,id:t.identifier,sx:t.clientX,sy:t.clientY,dx:0,dy:0};
@@ -2416,13 +2410,6 @@ function handleTouchStart(e) {
 }
 function handleTouchMove(e) {
   e.preventDefault();
-  // ピンチズーム処理
-  if (e.touches.length===2&&pinchActive) {
-    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-    cameraZoom=Math.max(0.4,Math.min(2.5,cameraZoom*(d/pinchDist)));
-    pinchDist=d;
-    return;
-  }
   for (const t of e.changedTouches) {
     if (t.identifier===lJoy.id) {
       const dx=t.clientX-lJoy.sx, dy=t.clientY-lJoy.sy;
@@ -2452,7 +2439,6 @@ function handleTouchMove(e) {
 }
 function handleTouchEnd(e) {
   e.preventDefault();
-  if (e.touches.length<2) pinchActive=false;
   for (const t of e.changedTouches) {
     if (t.identifier===lJoy.id) {
       lJoy={active:false,id:-1,sx:0,sy:0,dx:0,dy:0};
@@ -2473,6 +2459,9 @@ function toggleZoom() {
   zoomOut=!zoomOut;
   document.getElementById('zoom-btn').textContent=zoomOut?'🔍 通常表示 [M]':'🗺 全体図 [M]';
 }
+const ZOOM_LEVELS=[0.6,0.8,1.0,1.3,1.6];
+function zoomIn()  { const i=ZOOM_LEVELS.findIndex(z=>z>cameraZoom-0.05); cameraZoom=ZOOM_LEVELS[Math.min(i<0?ZOOM_LEVELS.length-1:i,ZOOM_LEVELS.length-1)]; }
+function zoomOut() { const i=[...ZOOM_LEVELS].reverse().findIndex(z=>z<cameraZoom+0.05); cameraZoom=ZOOM_LEVELS[Math.max(ZOOM_LEVELS.length-1-(i<0?ZOOM_LEVELS.length-1:i),0)]; }
 
 // ===================== UPDATE =====================
 function updateSuperUI() {
@@ -3151,6 +3140,7 @@ function startGame() {
   document.getElementById('super-bar-wrap').style.display='flex';
   document.getElementById('minimap').style.display='block';
   document.getElementById('zoom-btn').style.display='block';
+  document.getElementById('zoom-controls').style.display='flex';
   document.getElementById('char-hud').style.display='flex';
   document.getElementById('quit-btn').style.display='block';
   showMobileControls(true);
@@ -3312,6 +3302,7 @@ function goHome() {
   document.getElementById('super-bar-wrap').style.display='none';
   document.getElementById('minimap').style.display='none';
   document.getElementById('zoom-btn').style.display='none';
+  document.getElementById('zoom-controls').style.display='none';
   document.getElementById('char-hud').style.display='none';
   showMobileControls(false);
   document.getElementById('home').style.display='flex';
